@@ -1,0 +1,77 @@
+import sys
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import torch.optim as optim
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import AdaFNN as af
+import save_load as sl
+import time
+import math
+from pathlib import Path
+from torch.optim import Adam
+from sklearn.preprocessing import StandardScaler
+from sklearn.datasets import make_regression
+
+
+def calculate_fisher_information(model, autoencoder, X, Y, device):
+    model.train()
+    autoencoder.eval()
+    
+    X = X.to(device)
+    Y = Y.to(device)
+    
+    with torch.no_grad():
+        reconstructed_X, attention_weights, _ = autoencoder(X, return_reconstructed=True)
+        mixed_X, mixed_Y = reconstructed_X, Y
+    
+    outputs = model(mixed_X)
+    loss = compute_loss(outputs, mixed_Y)
+    
+    model.zero_grad()
+    loss.backward()
+    
+    gradients = []
+    for param in model.parameters():
+        if param.grad is not None:
+            gradients.append(param.grad.detach().clone())
+        else:
+            gradients.append(torch.zeros_like(param))
+    
+    attention_l2_norms = torch.norm(attention_weights, dim=1, p=2)
+    grad_flattened = torch.cat([g.view(-1) for g in gradients])
+    
+    fisher_info = torch.zeros_like(grad_flattened)
+    total_weight_norm = 0.0
+    
+    for i in range(X.size(0)):
+        sample_grad_sq = grad_flattened ** 2
+        attention_norm = attention_l2_norms[i].item()
+        fisher_info += sample_grad_sq * attention_norm
+        total_weight_norm += attention_norm
+    
+    if total_weight_norm > 0:
+        fisher_info = fisher_info / total_weight_norm
+    
+    avg_attention = attention_weights.mean(dim=0, keepdim=True)
+    autoencoder.update_previous_attention(avg_attention)
+    
+    return fisher_info.cpu().numpy(), attention_weights
+
+
+def ewc_loss(fisher_information, model, prev_weights, device, lambda_ewc=1.0):
+    if fisher_information is None or prev_weights is None:
+        return torch.tensor(0.0, device=device)
+    
+    fisher_tensor = torch.tensor(fisher_information, dtype=torch.float32, device=device)
+    current_weights = torch.cat([param.view(-1) for param in model.parameters()])
+    
+    if isinstance(prev_weights, torch.Tensor):
+        prev_weights_tensor = prev_weights.clone().detach().to(device)
+    else:
+        prev_weights_tensor = torch.tensor(prev_weights, dtype=torch.float32, device=device)
+    
+    ewc_loss_value = 0.5 * torch.sum(fisher_tensor * (current_weights - prev_weights_tensor) ** 2)
+    return lambda_ewc * ewc_loss_value
