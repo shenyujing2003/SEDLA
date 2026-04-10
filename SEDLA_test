@@ -19,11 +19,11 @@ device = torch.device("cpu")
 print(f"Using device: {device}")
 
 # Model configuration
-base_hidden = [256, 256, 256, 256]
-sub_hidden = [64, 64, 64, 64]
+base_hidden = [64, 64, 64]
+sub_hidden = [128, 128, 128]
 n_base = 5
-lambda1, l1_k = 1, 2
-lambda2, l2_pairs = 1, 2
+lambda1, l1_k = 0.0, 2
+lambda2, l2_pairs = 0.0, 2
 dropout = 0.1
 save_model_every = 100
 epoch = 500
@@ -37,10 +37,10 @@ class OnlineAE(nn.Module):
     def __init__(self, input_dim, p=0.1, temperature=1.0):
         super(OnlineAE, self).__init__()
         
-        self.encoder = nn.Linear(input_dim, 250)
-        self.gate_linear = nn.Linear(250, 250)
+        self.encoder = nn.Linear(input_dim, 20)
+        self.gate_linear = nn.Linear(20, 20)
         self.activation = nn.ReLU()
-        self.decoder = nn.Linear(250, input_dim)
+        self.decoder = nn.Linear(20, input_dim)
         
         self.p = p
         self.temperature = temperature
@@ -587,3 +587,4 @@ if __name__ == "__main__":
     print(f"Average (Original Scale):")
     print(f"  MSE = {avg_mse_orig:.6f} ± {std_mse_orig:.6f}")
     print(f"  MAE = {avg_mae_orig:.6f} ± {std_mae_orig:.6f}")
+
