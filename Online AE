@@ -44,13 +44,13 @@ class DataStandardizer:
 
 # ========== 1. Sparse Attention Autoencoder ==========
 class SparseAttentionAutoencoder(nn.Module):
-    def __init__(self, input_dim, p=1, temperature=1.0):
+    def __init__(self, input_dim, p=0.8, temperature=1.0):
         super(SparseAttentionAutoencoder, self).__init__()
         
-        self.encoder = nn.Linear(input_dim, 300)
-        self.gate_linear = nn.Linear(300, 300)
+        self.encoder = nn.Linear(input_dim, 20)
+        self.gate_linear = nn.Linear(20, 20)
         self.activation = nn.ReLU()
-        self.decoder = nn.Linear(300, input_dim)
+        self.decoder = nn.Linear(20, input_dim)
         
         self.p = p
         self.temperature = temperature
