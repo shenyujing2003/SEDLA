@@ -22,8 +22,8 @@ print(f"Using device: {device}")
 base_hidden = [256, 256, 256, 256]
 sub_hidden = [64, 64, 64, 64]
 n_base = 5
-lambda1, l1_k = 0.0, 2
-lambda2, l2_pairs = 0.0, 2
+lambda1, l1_k = 1, 2
+lambda2, l2_pairs = 1, 2
 dropout = 0.1
 save_model_every = 100
 epoch = 500
