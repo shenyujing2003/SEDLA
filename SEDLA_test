@@ -1,3 +1,4 @@
+
 import sys
 import torch
 import torch.nn as nn
@@ -34,7 +35,7 @@ compute_mae = torch.nn.L1Loss()
 
 # ========== 1. Online Autoencoder ==========
 class OnlineAE(nn.Module):
-    def __init__(self, input_dim, p=0.1, temperature=1.0):
+    def __init__(self, input_dim, p=0.8, temperature=1.0):
         super(OnlineAE, self).__init__()
         
         self.encoder = nn.Linear(input_dim, 20)
@@ -587,4 +588,3 @@ if __name__ == "__main__":
     print(f"Average (Original Scale):")
     print(f"  MSE = {avg_mse_orig:.6f} ± {std_mse_orig:.6f}")
     print(f"  MAE = {avg_mae_orig:.6f} ± {std_mae_orig:.6f}")
-
